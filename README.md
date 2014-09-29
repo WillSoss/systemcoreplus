@@ -14,7 +14,7 @@ TrimNullSafe(): An extension method that calls Trim(), but can be used even when
 
 TrimWhitespace(): In addition to removing leading and trailing whitespace, replaces consecutive whitespaces with a single space. Has the ability to consider or ignore line breaks.
 
-Truncate(): The counter to PadLeft(), will truncate a string at a given length.
+Truncate(): The counter to PadRight(), will truncate a string at a given length.
 
 System.IO.CsvReader/CsvWriter
 --------------
