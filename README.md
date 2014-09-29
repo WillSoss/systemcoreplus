@@ -18,7 +18,7 @@ Truncate(): The counter to PadLeft(), will truncate a string at a given length.
 
 System.IO.CsvReader/CsvWriter
 --------------
-A lightweight and efficient implementation that will correctly deal with escaped text qualifiers and line breaks in fields.
+A lightweight and efficient implementation that will correctly deal with escaped qualifiers and line breaks in fields.
 
 System.Reflection.TypeName
 --------------
