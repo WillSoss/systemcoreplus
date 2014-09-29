@@ -1,5 +1,6 @@
 System.Core+
 ==============
+A library of simple enhancements to System and System.Core. This single dll has no other dependencies, making it a lightweight addition to any project.
 
 System.EventArgs<T>
 --------------
