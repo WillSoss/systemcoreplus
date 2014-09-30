@@ -2,7 +2,7 @@ System.Core+
 ==============
 A library of simple enhancements to System and System.Core. This single dll has no other dependencies, making it a lightweight addition to any project.
 
-System.EventArgs<T>
+System.EventArgs&lt;T&gt;
 --------------
 An EventArgs class that adds a generic property T Argument, eliminating the need to create specialized subclasses that would only contain a single property.
 
