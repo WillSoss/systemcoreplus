@@ -8,10 +8,9 @@ namespace System.IO
 	/// <summary>
 	/// Reads flat files with fixed width columns
 	/// </summary>
-	public class FixedWidthReader : IFlatFileReader
+	public class FixedWidthReader : FlatFileReader
 	{
 		private IReader reader;
-		private volatile bool disposed = false;
 
 		private int[] columnWidths;
 		private int recordWidth;
@@ -24,6 +23,7 @@ namespace System.IO
             : this(s, new FixedWidthReaderOptions(), columnWidths) { }
 
 		public FixedWidthReader(Stream s, FixedWidthReaderOptions options, params int[] columnWidths)
+			: base(s)
         {
 			if (columnWidths == null || columnWidths.Length == 0)
 				throw new ArgumentNullException("columnWidths");
@@ -37,12 +37,7 @@ namespace System.IO
 			this.padding = options.Padding;
         }
 
-		public Stream BaseStream
-		{
-			get { return reader.BaseStream; }
-		}
-
-		public string[] Read()
+		public override string[] Read()
 		{
 			CheckDisposed();
 
@@ -63,41 +58,15 @@ namespace System.IO
 				pos += columnWidths[i];
 			}
 
-			// Consume EOL, if any; One of: CR+LF, CR or LF
-			if (!reader.EndOfStream)
-			{
-				var next = (char)reader.Peek();
-
-				if (next == '\r')
-				{
-					reader.Read();
-
-					if (!reader.EndOfStream)
-						next = (char)reader.Peek();
-				}
-
-				if (next == '\n')
-					reader.Read();
-			}
+			ConsumeEol(reader);
 
 			return record;
 		}
 
-		private void CheckDisposed()
+		protected override void OnDispose()
 		{
-			if (this.disposed)
-				throw new InvalidOperationException("Cannot call property or method after the object is disposed");
-		}
-
-		public void Dispose()
-		{
-			if (!this.disposed)
-			{
-				this.disposed = true;
-
-				if (this.reader != null)
-					this.reader.Dispose();
-			}
+			if (this.reader != null)
+				this.reader.Dispose();
 		}
 	}
 }
