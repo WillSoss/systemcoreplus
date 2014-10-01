@@ -25,6 +25,13 @@ namespace System.IO
 			return reader.Read();
 		}
 
+		string IReader.Read(int length)
+		{
+			char[] buffer = new char[length];
+			var read = reader.ReadBlock(buffer, 0, length);
+			return new string(buffer, 0, Math.Min(length, read));
+		}
+
 		int IReader.Peek()
 		{
 			return reader.Peek();

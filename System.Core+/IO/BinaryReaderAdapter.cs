@@ -24,11 +24,18 @@ namespace System.IO
 		int IReader.Read()
 		{
 			int i = reader.Read();
-
+			
 			if (i == -1)
 				endOfStream = true;
 
 			return i;
+		}
+
+		string IReader.Read(int length)
+		{
+			char[] buffer = new char[length];
+			var read = reader.Read(buffer, 0, length);
+			return new string(buffer, 0, Math.Min(length, read));
 		}
 
 		int IReader.Peek()

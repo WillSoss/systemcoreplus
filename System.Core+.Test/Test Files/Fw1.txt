@@ -1,0 +1,3 @@
+﻿First field    Second field   10.2true 2010-01-01
+First fi
+eld  Second field    1.1false2010-01-01

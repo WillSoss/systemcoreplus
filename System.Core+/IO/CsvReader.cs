@@ -6,7 +6,10 @@ using System.IO;
 
 namespace System.IO
 {
-	public class CsvReader : IDisposable
+	/// <summary>
+	/// Reads flat files with comma separated values
+	/// </summary>
+	public class CsvReader : IFlatFileReader
 	{
 		public const char DefaultQualifier = '"';
 		public const char DefaultDelimiter = ',';

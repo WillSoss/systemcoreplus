@@ -1,27 +1,27 @@
 ﻿using System;
 using System.IO;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
+using Xunit.Extensions;
 
 namespace System.CorePlus.Test
 {
-    [TestClass]
-    public class CsvReaderTests
+    public class csv_reader
     {
-        [TestMethod]
-        public void ReadCsv()
+        [Observation]
+        public void should_read_csv()
         {
-            using (var r = new CsvReader(@"Test Files\Csv\Csv1.csv"))
+            using (var r = new CsvReader(@"Test Files\Csv1.csv"))
             {
                 var data = r.Read();
 
-                Assert.AreEqual(6, data.Length);
-                Assert.AreEqual("\"", data[0], "Qualifier in field");
-                Assert.AreEqual(",", data[1], "Delimiter in field");
-                Assert.AreEqual("hello", data[2], "Unqualified field");
-                Assert.AreEqual("world", data[3], "Unqualified field");
-                Assert.AreEqual("hello,world", data[4], "Delimiter in field");
-                Assert.AreEqual(@"line
-break", data[5], "Line break in field");
+                Assert.Equal(6, data.Length);
+                Assert.Equal("\"", data[0]);
+                Assert.Equal(",", data[1]);
+                Assert.Equal("hello", data[2]);
+                Assert.Equal("world", data[3]);
+                Assert.Equal("hello,world", data[4]);
+                Assert.Equal(@"line
+break", data[5]);
             }
         }
     }

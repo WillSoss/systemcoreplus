@@ -39,6 +39,10 @@
     <Compile Include="IO\BinaryReaderAdapter.cs" />
     <Compile Include="IO\CsvReader.cs" />
     <Compile Include="IO\CsvWriter.cs" />
+    <Compile Include="IO\FixedWidthReader.cs" />
+    <Compile Include="IO\FixedWidthReaderOptions.cs" />
+    <Compile Include="IO\IFlatFileReader.cs" />
+    <Compile Include="IO\InvalidFileFormatException.cs" />
     <Compile Include="IO\IReader.cs" />
     <Compile Include="IO\StreamReaderAdapter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
