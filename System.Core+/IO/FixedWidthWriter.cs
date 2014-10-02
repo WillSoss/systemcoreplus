@@ -6,6 +6,9 @@ using System.Text;
 
 namespace System.IO
 {
+	/// <summary>
+	/// Writes flat files with fixed width columns
+	/// </summary>
 	public class FixedWidthWriter : IFlatFileWriter
 	{
 		public const char DefaultPadding = ' ';
@@ -48,16 +51,31 @@ namespace System.IO
 
 		public Stream BaseStream { get { return writer.BaseStream; } }
 
+		/// <summary>
+		/// Writes the objects out as a single record in the file
+		/// </summary>
+		/// <param name="record">A single record where each item is a single field</param>
+		/// <exception cref="ArgumentOutOfRangeException">Thrown when the data contains too few or too many fields, or a field is too long for the column and TruncateLongValues is not set to true.</exception>
         public void Write(params string[] record)
         {
             Write((IEnumerable)record);
         }
 
+		/// <summary>
+		/// Writes the objects out as a single record
+		/// </summary>
+		/// <param name="record">A single record where each item is a single field</param>
+		/// <exception cref="ArgumentOutOfRangeException">Thrown when the data contains too few or too many fields, or a field is too long for the column and TruncateLongValues is not set to true.</exception>
         public void Write(params object[] record)
         {
             Write((IEnumerable)record);
         }
 
+		/// <summary>
+		/// Writes the objects out as a single record
+		/// </summary>
+		/// <param name="record">A single record where each item is a single field</param>
+		/// <exception cref="ArgumentOutOfRangeException">Thrown when the data contains too few or too many fields, or a field is too long for the column and TruncateLongValues is not set to true.</exception>
 		public void Write(IEnumerable record)
 		{
 			CheckDisposed();
@@ -98,6 +116,9 @@ namespace System.IO
 			writer.Write(newLine);
 		}
 
+		/// <summary>
+		/// Causes any buffered data to be written to the underlying stream.
+		/// </summary>
 		public void Flush()
 		{
 			writer.Flush();
