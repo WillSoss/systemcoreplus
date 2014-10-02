@@ -39,16 +39,7 @@ namespace System.CorePlus.Test
 		[Observation]
 		public void should_pad_field()
 		{
-			var expected = "asdf      \r\n";
-			var actual = File;
-			StringBuilder debug = new StringBuilder();
-
-			for (int i = 0; i < 10; i++)
-			{
-				debug.AppendLine("{0}{1} {2}{3}".FormatString(expected[i], (int)expected[i], actual[i], (int)actual[i]));
-			}
-
-			actual.ShouldEqual(expected);
+			File.ShouldEqual("asdf      \r\n");
 		}
 	}
 }
