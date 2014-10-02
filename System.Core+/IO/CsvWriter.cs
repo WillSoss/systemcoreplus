@@ -6,7 +6,7 @@ using System.Text;
 
 namespace System.IO
 {
-    public class CsvWriter : IDisposable
+    public class CsvWriter : IFlatFileWriter
     {
         public const char DefaultQualifier = '"';
         public const char DefaultDelimiter = ',';
@@ -74,6 +74,8 @@ namespace System.IO
 
         public void Write(IEnumerable record)
         {
+			CheckDisposed();
+
             bool first = true;
 
             foreach (var obj in record)
@@ -98,7 +100,18 @@ namespace System.IO
             else
                 writer.Write(newLine);
         }
-        
+
+		public void Flush()
+		{
+			writer.Flush();
+		}
+
+		protected void CheckDisposed()
+		{
+			if (this.disposed)
+				throw new InvalidOperationException("Cannot call property or method after the object is disposed");
+		}
+
         public void Dispose()
         {
             if (!this.disposed)

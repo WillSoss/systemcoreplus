@@ -9,11 +9,12 @@ namespace System.IO
 	/// <summary>
 	/// Reads flat files with comma separated values
 	/// </summary>
-	public class CsvReader : FlatFileReader
+	public class CsvReader : IFlatFileReader
 	{
 		public const char DefaultQualifier = '"';
 		public const char DefaultDelimiter = ',';
 
+		private volatile bool disposed = false;
 		private IReader reader;
 
 		private char qualifier;
@@ -29,15 +30,20 @@ namespace System.IO
             : this(s, qualifier, delimiter, Encoding.UTF8) { }
 
         public CsvReader(Stream s, char qualifier, char delimiter, Encoding encoding)
-			: base(s)
         {
             this.reader = new StreamReaderAdapter(new StreamReader(s, encoding));
             this.delimiter = delimiter;
             this.qualifier = qualifier;
         }
+
+		public Stream BaseStream { get { return reader.BaseStream; } }
+
+		public bool EndOfFile { get { return reader.EndOfStream; } }
 		
-		public override string[] Read()
+		public string[] Read()
 		{
+			CheckDisposed();
+
 			if (reader.EndOfStream)
 				return null;
 
@@ -107,10 +113,21 @@ namespace System.IO
 			return record.ToArray();
 		}
 
-		protected override void OnDispose()
+		protected void CheckDisposed()
 		{
-			if (this.reader != null)
-				this.reader.Dispose();
+			if (this.disposed)
+				throw new InvalidOperationException("Cannot call property or method after the object is disposed");
+		}
+
+		public void Dispose()
+		{
+			if (!this.disposed)
+			{
+				this.disposed = true;
+
+				if (this.reader != null)
+					this.reader.Dispose();
+			}
 		}
 	}
 }

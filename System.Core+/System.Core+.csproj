@@ -41,7 +41,10 @@
     <Compile Include="IO\CsvWriter.cs" />
     <Compile Include="IO\FixedWidthReader.cs" />
     <Compile Include="IO\FixedWidthReaderOptions.cs" />
-    <Compile Include="IO\FlatFileReader.cs" />
+    <Compile Include="IO\FixedWidthWriter.cs" />
+    <Compile Include="IO\FixedWidthWriterOptions.cs" />
+    <Compile Include="IO\IFlatFileReader.cs" />
+    <Compile Include="IO\IFlatFileWriter.cs" />
     <Compile Include="IO\InvalidFileFormatException.cs" />
     <Compile Include="IO\IReader.cs" />
     <Compile Include="IO\StreamReaderAdapter.cs" />

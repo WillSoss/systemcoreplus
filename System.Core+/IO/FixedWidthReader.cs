@@ -8,8 +8,9 @@ namespace System.IO
 	/// <summary>
 	/// Reads flat files with fixed width columns
 	/// </summary>
-	public class FixedWidthReader : FlatFileReader
+	public class FixedWidthReader : IFlatFileReader
 	{
+		private volatile bool disposed = false;
 		private IReader reader;
 
 		private int[] columnWidths;
@@ -23,7 +24,6 @@ namespace System.IO
             : this(s, new FixedWidthReaderOptions(), columnWidths) { }
 
 		public FixedWidthReader(Stream s, FixedWidthReaderOptions options, params int[] columnWidths)
-			: base(s)
         {
 			if (columnWidths == null || columnWidths.Length == 0)
 				throw new ArgumentNullException("columnWidths");
@@ -37,7 +37,11 @@ namespace System.IO
 			this.padding = options.Padding;
         }
 
-		public override string[] Read()
+		public Stream BaseStream { get { return reader.BaseStream; } }
+
+		public bool EndOfFile { get { return reader.EndOfStream; } }
+
+		public string[] Read()
 		{
 			CheckDisposed();
 
@@ -63,10 +67,43 @@ namespace System.IO
 			return record;
 		}
 
-		protected override void OnDispose()
+		/// <summary>
+		/// Consumes the end-of-line characters from the reader. Will consume CR+LF or just CR or LF, whichever is present.
+		/// </summary>
+		private void ConsumeEol(IReader Reader)
 		{
-			if (this.reader != null)
-				this.reader.Dispose();
+			if (!Reader.EndOfStream)
+			{
+				var next = (char)Reader.Peek();
+
+				if (next == '\r')
+				{
+					Reader.Read();
+
+					if (!Reader.EndOfStream)
+						next = (char)Reader.Peek();
+				}
+
+				if (next == '\n')
+					Reader.Read();
+			}
+		}
+
+		protected void CheckDisposed()
+		{
+			if (this.disposed)
+				throw new InvalidOperationException("Cannot call property or method after the object is disposed");
+		}
+
+		public void Dispose()
+		{
+			if (!this.disposed)
+			{
+				this.disposed = true;
+
+				if (this.reader != null)
+					this.reader.Dispose();
+			}
 		}
 	}
 }
