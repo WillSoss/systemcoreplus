@@ -6,6 +6,12 @@ using System.Text;
 
 namespace System.IO.Parsing
 {
+	public enum FlatFileFormat
+	{
+		Csv = 0,
+		FixedWidth = 1
+	}
+
 	public class FileParser<T> : IDisposable, IEnumerator<T>
 		where T : new()
 	{
@@ -54,6 +60,25 @@ namespace System.IO.Parsing
 			this.IsDisposed = false;
 			this.reader = reader;
 			this.Mappings = new FieldMappingList(typeof(T));
+		}
+
+		public FileParser(string filePath, FlatFileFormat format)
+			: this(GetReader(filePath, format)) { }
+
+		private static IFlatFileReader GetReader(string filePath, FlatFileFormat format)
+		{
+			if (format == FlatFileFormat.Csv)
+				return new CsvReader(filePath);
+
+			if (format == FlatFileFormat.FixedWidth)
+				return new FixedWidthReader(filePath, GetColumnWidths<T>());
+
+			throw new ArgumentException("Unsupported file format");
+		}
+
+		public static int[] GetColumnWidths<T>()
+		{
+			return new FieldMappingList(typeof(T)).OrderBy(m => m.Index).Select(m => m.FieldLength).ToArray();
 		}
 
 		public void SetParser(int index, IFieldParser parser)
