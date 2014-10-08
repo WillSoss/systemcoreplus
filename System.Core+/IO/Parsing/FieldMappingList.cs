@@ -19,6 +19,34 @@ namespace System.IO.Parsing
 			get { return inner.Sum(m => m.FieldCount); }
 		}
 
+		public IEnumerable<int> FieldLenths
+		{
+			get
+			{
+				return GetFieldLengths(this);
+			}
+		}
+
+		private IEnumerable<int> GetFieldLengths(FieldMappingList list)
+		{
+			foreach (var f in list)
+			{
+				if (f.IsArray)
+				{
+					// Repeat the inner field lengths for each element in the array
+					for (int n = 0; n < f.ElementCount; n++)
+					{
+						foreach (var i in GetFieldLengths(f.InnerMappings))
+							yield return i;
+					}
+				}
+				else
+				{
+					yield return f.FieldLength;
+				}
+			}
+		}
+
 		public int Length
 		{
 			get { return inner.Sum(m => m.FieldLength); }

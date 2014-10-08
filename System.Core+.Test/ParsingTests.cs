@@ -28,24 +28,49 @@ namespace System.CorePlus.Test
 		public int Number { get; set; }
 		[Field(1, 10)]
 		public string Name { get; set; }
-		[Field(2, 10)]
+		[Field(2, 12)]
 		public string Address { get; set; }
 	}
 
 	public class parsing_fixed_width_file : Specification
 	{
+		List<PropertyModel> properties;
+
 		public override void Observe()
 		{
-			using (var parser = new FileParser<PropertyModel>("", FlatFileFormat.FixedWidth))
-			{
+			properties = new List<PropertyModel>();
 
+			using (var parser = new FileParser<PropertyModel>(@"Test Files\Fw3.txt", FlatFileFormat.FixedWidth))
+			{
+				while (parser.MoveNext())
+					properties.Add(parser.Current);
 			}
 		}
 
 		[Observation]
 		public void should_parse_file()
 		{
-			throw new NotImplementedException();
+			properties.Count.ShouldEqual(2);
+
+			properties[0].AccountNumber.ShouldEqual("12345678");
+			properties[0].IsAdjudicated.ShouldBeFalse();
+			properties[0].AmountDue.ShouldEqual(123.45M);
+			properties[0].Owners[0].Number.ShouldEqual(12);
+			properties[0].Owners[0].Name.ShouldEqual("John Smith");
+			properties[0].Owners[0].Address.ShouldEqual("123 Main St");
+			properties[0].Owners[1].Number.ShouldEqual(13);
+			properties[0].Owners[1].Name.ShouldEqual("Jane Smith");
+			properties[0].Owners[1].Address.ShouldEqual("124 Main St");
+
+			properties[1].AccountNumber.ShouldEqual("12324589");
+			properties[1].IsAdjudicated.ShouldBeTrue();
+			properties[1].AmountDue.ShouldEqual(3094.98M);
+			properties[1].Owners[0].Number.ShouldEqual(12);
+			properties[1].Owners[0].Name.ShouldEqual("John Smith");
+			properties[1].Owners[0].Address.ShouldEqual("123 Main St");
+			properties[1].Owners[1].Number.ShouldEqual(13);
+			properties[1].Owners[1].Name.ShouldEqual("Jane Smith");
+			properties[1].Owners[1].Address.ShouldEqual("124 Main St");
 		}
 	}
 }
