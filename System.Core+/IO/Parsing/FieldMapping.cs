@@ -16,6 +16,8 @@ namespace System.IO.Parsing
 		public int FieldCount { get; private set; }
 		public int FieldLength { get; private set; }
 		public bool IsArray { get; private set; }
+		public bool IsComplexType { get { return InnerMappings != null; } }
+		public int AbsoluteIndex { get; internal set; }
 		internal FieldMappingList InnerMappings { get; private set; }
 
 		public IFieldParser Parser
@@ -48,14 +50,16 @@ namespace System.IO.Parsing
 
 		private FieldMapping(FieldAttribute fieldAttribute, MemberInfo memberInfo, Type type)
 		{
+			var inner = new FieldMappingList(type.IsArray ? type.GetElementType() : type);
+
 			Index = fieldAttribute.Index;
-			ElementCount = 1;
-			FieldCount = 1;
-			FieldLength = fieldAttribute.Length;
-			IsArray = false;
-			InnerMappings = null;
+			IsArray = fieldAttribute.Repeats > 0;
+			ElementCount = fieldAttribute.Repeats > 0 ? fieldAttribute.Repeats : 1;
+			FieldCount = inner.Count > 0 ? inner.Sum(m => m.FieldCount * m.ElementCount) : 1;
+			FieldLength = inner.Count > 0 ? inner.Sum(m => m.FieldLength * m.ElementCount) : fieldAttribute.Length;
+			InnerMappings = inner.Count > 0 ? inner : null;
 			MemberInfo = memberInfo;
-			MemberType = type;
+			MemberType = type.IsArray ? type.GetElementType() : type;
 
 			if (fieldAttribute.ParserType != null)
 			{
@@ -71,34 +75,28 @@ namespace System.IO.Parsing
 			}
 		}
 
-		internal FieldMapping(FieldArrayAttribute fieldArrayAttribute, FieldInfo memberInfo)
-			: this(fieldArrayAttribute, (MemberInfo)memberInfo, memberInfo.FieldType)
-		{
+		//internal FieldMapping(FieldArrayAttribute fieldArrayAttribute, PropertyInfo memberInfo)
+		//	: this(fieldArrayAttribute, (MemberInfo)memberInfo, memberInfo.PropertyType)
+		//{
+		//	if (!memberInfo.CanWrite)
+		//		throw new FileParsingException(string.Format("Can not map property '{0}' because it is read-only", memberInfo.Name));
+		//}
 
-		}
+		//private FieldMapping(FieldArrayAttribute fieldArrayAttribute, MemberInfo memberInfo, Type type)
+		//{
+		//	if (!type.IsArray)
+		//		throw new FileParsingException(string.Format("Can not map property '{0}' because it is marked as an array but the type is not an array", memberInfo.Name));
 
-		internal FieldMapping(FieldArrayAttribute fieldArrayAttribute, PropertyInfo memberInfo)
-			: this(fieldArrayAttribute, (MemberInfo)memberInfo, memberInfo.PropertyType)
-		{
-			if (!memberInfo.CanWrite)
-				throw new FileParsingException(string.Format("Can not map property '{0}' because it is read-only", memberInfo.Name));
-		}
-
-		private FieldMapping(FieldArrayAttribute fieldArrayAttribute, MemberInfo memberInfo, Type type)
-		{
-			if (!type.IsArray)
-				throw new FileParsingException(string.Format("Can not map property '{0}' because it is marked as an array but the type is not an array", memberInfo.Name));
-
-			IsArray = true;
-			InnerMappings = new FieldMappingList(type.GetElementType());
-			Index = fieldArrayAttribute.Index;
-			ElementCount = fieldArrayAttribute.Length;
-			FieldCount = InnerMappings.Sum(m => m.FieldCount) * ElementCount;
-			FieldLength = InnerMappings.Sum(m => m.FieldLength) * ElementCount;
-			MemberInfo = memberInfo;
-			MemberType = type.GetElementType();
-			ArrayMemberType = type;
-		}
+		//	IsArray = true;
+		//	InnerMappings = new FieldMappingList(type.GetElementType());
+		//	Index = fieldArrayAttribute.Index;
+		//	ElementCount = fieldArrayAttribute.Length;
+		//	FieldCount = InnerMappings.Sum(m => m.FieldCount) * ElementCount;
+		//	FieldLength = InnerMappings.Sum(m => m.FieldLength) * ElementCount;
+		//	MemberInfo = memberInfo;
+		//	MemberType = type.GetElementType();
+		//	ArrayMemberType = type;
+		//}
 
 		internal IFieldParser GetParser()
 		{
@@ -106,10 +104,14 @@ namespace System.IO.Parsing
 
 			if (parser == null)
 			{
-				parser = FieldParser.Get(MemberType);
-
-				if (parser == null)
-					throw new FileParsingException(string.Format("No parser is available for field or property '{0}'", MemberInfo.Name));
+				try
+				{
+					parser = FieldParser.Get(IsArray ? MemberType.GetElementType() : MemberType);
+				}
+				catch (KeyNotFoundException ex)
+				{
+					throw new FileParsingException(string.Format("No parser is available for field or property '{0}'", MemberInfo.Name), ex);
+				}	
 			}
 
 			return parser;
@@ -117,7 +119,16 @@ namespace System.IO.Parsing
 
 		internal void SetValue(object item, string value)
 		{
-			object parsed = GetParser().Parse(value);
+			object parsed = null;
+
+			try
+			{
+				parsed = GetParser().Parse(value);
+			}
+			catch (FormatException ex)
+			{
+				throw new FormatException("Could not parse '{0}' into field '{1}'".FormatString(value, MemberType.Name), ex);
+			}
 
 			if (MemberInfo is PropertyInfo)
 			{
@@ -127,6 +138,22 @@ namespace System.IO.Parsing
 			{
 				((FieldInfo)MemberInfo).SetValue(item, parsed);
 			}
+		}
+
+		internal object SetComplexType(object item)
+		{
+			var ct = MemberType.GetConstructor(Type.EmptyTypes).Invoke(new object[0]);
+
+			if (MemberInfo is PropertyInfo)
+			{
+				((PropertyInfo)MemberInfo).SetValue(item, ct, null);
+			}
+			else
+			{
+				((FieldInfo)MemberInfo).SetValue(item, ct);
+			}
+
+			return ct;
 		}
 
 		internal Array SetNewArray(object item)

@@ -19,7 +19,7 @@ namespace System.IO.Parsing
 			get { return inner.Sum(m => m.FieldCount); }
 		}
 
-		public IEnumerable<int> FieldLenths
+		public IEnumerable<int> FieldLengths
 		{
 			get
 			{
@@ -36,9 +36,21 @@ namespace System.IO.Parsing
 					// Repeat the inner field lengths for each element in the array
 					for (int n = 0; n < f.ElementCount; n++)
 					{
-						foreach (var i in GetFieldLengths(f.InnerMappings))
-							yield return i;
+						if (f.IsComplexType)
+						{
+							foreach (var i in GetFieldLengths(f.InnerMappings))
+								yield return i;
+						}
+						else
+						{
+							yield return f.FieldLength;
+						}
 					}
+				}
+				else if (f.IsComplexType)
+				{
+					foreach (var i in GetFieldLengths(f.InnerMappings))
+						yield return i;
 				}
 				else
 				{
@@ -75,42 +87,28 @@ namespace System.IO.Parsing
 			inner = new List<FieldMapping>();
 			this.IsReadOnly = false;
 
+			// Check fields for attribute
+
 			var fields = type.GetFields();
 
 			foreach (var field in fields)
 			{
-				var attrs = field.GetCustomAttributes(typeof(FieldArrayAttribute), true);
+				var attrs = field.GetCustomAttributes(typeof(FieldAttribute), true);
 
 				if (attrs.Length > 0)
-				{
-					Add(new FieldMapping((FieldArrayAttribute)attrs.First(), field));
-				}
-				else
-				{
-					attrs = field.GetCustomAttributes(typeof(FieldAttribute), true);
-
-					if (attrs.Length > 0)
-						Add(new FieldMapping((FieldAttribute)attrs.First(), field));
-				}
+					Add(new FieldMapping((FieldAttribute)attrs.First(), field));
 			}
+
+			// Check properties for attribute
 
 			var props = type.GetProperties();
 
 			foreach (var prop in props)
 			{
-				var attrs = prop.GetCustomAttributes(typeof(FieldArrayAttribute), true);
+				var attrs = prop.GetCustomAttributes(typeof(FieldAttribute), true);
 
 				if (attrs.Length > 0)
-				{
-					Add(new FieldMapping((FieldArrayAttribute)attrs.First(), prop));
-				}
-				else
-				{
-					attrs = prop.GetCustomAttributes(typeof(FieldAttribute), true);
-
-					if (attrs.Length > 0)
-						Add(new FieldMapping((FieldAttribute)attrs.First(), prop));
-				}
+					Add(new FieldMapping((FieldAttribute)attrs.First(), prop));
 			}
 
 			Initialized();
@@ -128,6 +126,22 @@ namespace System.IO.Parsing
 					throw new FileParsingException(string.Format("Field attribute with index {0} not found. Field attributes must be unique and sequential, starting at zero.", i));
 
 				i++;
+			}
+
+			ComputeAbsoluteIndexes(0);
+		}
+
+		private void ComputeAbsoluteIndexes(int baseIndex)
+		{
+			int i = baseIndex;
+			foreach (var m in this)
+			{
+				m.AbsoluteIndex = i;
+
+				if (m.IsComplexType)
+					m.InnerMappings.ComputeAbsoluteIndexes(i);
+
+				i += m.ElementCount * m.FieldCount;
 			}
 		}
 

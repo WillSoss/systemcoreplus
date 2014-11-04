@@ -71,7 +71,7 @@ namespace System.IO.Parsing
 				return new CsvReader(filePath);
 
 			if (format == FlatFileFormat.FixedWidth)
-				return new FixedWidthReader(filePath, new FieldMappingList(typeof(T)).FieldLenths.ToArray());
+				return new FixedWidthReader(filePath, new FieldMappingList(typeof(T)).FieldLengths.ToArray());
 
 			throw new ArgumentException("Unsupported file format");
 		}
@@ -123,7 +123,7 @@ namespace System.IO.Parsing
 			return true;
 		}
 
-		private void ReadValues(object item, FieldMappingList mappings, string[] record, int baseIndex)
+		private void ReadValues(object item, FieldMappingList mappings, string[] record, int offset)
 		{
 			foreach (var field in mappings)
 			{
@@ -133,15 +133,27 @@ namespace System.IO.Parsing
 
 					for (int i = 0; i < field.ElementCount; i++)
 					{
-						var child = field.SetNewArrayInstance(array, i);
+						if (field.IsComplexType)
+						{
+							var child = field.SetNewArrayInstance(array, i);
 
-						// TODO: field.InnerMappings.Count needs to be replaced with a property that counts the fields for the mapping but does not multiple by the element count; an array in the array would break this
-						ReadValues(child, field.InnerMappings, record, field.Index + baseIndex + (i * field.InnerMappings.Count));
+							ReadValues(child, field.InnerMappings, record, i * field.FieldCount);
+						}
+						else
+						{
+							array.SetValue(record[field.AbsoluteIndex + offset + i], i);
+						}
 					}
+				}
+				else if (field.IsComplexType)
+				{
+					var child = field.SetComplexType(item);
+
+					ReadValues(child, field.InnerMappings, record, 0);
 				}
 				else
 				{
-					field.SetValue(item, record[field.Index + baseIndex]);
+					field.SetValue(item, record[field.AbsoluteIndex + offset]);
 				}
 			}
 		}

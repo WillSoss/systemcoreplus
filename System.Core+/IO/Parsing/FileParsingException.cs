@@ -9,5 +9,8 @@ namespace System.IO.Parsing
 	{
 		public FileParsingException(string message)
 			: base(message) { }
+
+		public FileParsingException(string message, Exception inner)
+			: base(message, inner) { }
 	}
 }

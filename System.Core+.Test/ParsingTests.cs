@@ -18,8 +18,18 @@ namespace System.CorePlus.Test
 		public bool IsAdjudicated { get; set; }
 		[Field(2, 10)]
 		public decimal AmountDue { get; set; }
-		[FieldArray(3, 2)]
+		[Field(3, repeats: 2)]
 		public OwnerModel[] Owners { get; set; }
+		[Field(4)]
+		public AddressModel Address { get;set;}
+	}
+
+	public class AddressModel
+	{
+		[Field(0, 12)]
+		public string Street { get; set; }
+		[Field(1, 2)]
+		public string State { get; set; }
 	}
 
 	public class OwnerModel
@@ -30,6 +40,8 @@ namespace System.CorePlus.Test
 		public string Name { get; set; }
 		[Field(2, 12)]
 		public string Address { get; set; }
+		[Field(3, length: 10, repeats: 2)]
+		public string[] PhoneNumbers { get; set; }
 	}
 
 	public class parsing_fixed_width_file : Specification
@@ -71,6 +83,35 @@ namespace System.CorePlus.Test
 			properties[1].Owners[1].Number.ShouldEqual(13);
 			properties[1].Owners[1].Name.ShouldEqual("Jane Smith");
 			properties[1].Owners[1].Address.ShouldEqual("124 Main St");
+		}
+
+		[Fact(Skip = "Not really a test")]
+		public void PrintFieldMappings()
+		{
+			FieldMappingList list = new FieldMappingList(typeof(PropertyModel));
+			StringBuilder sb = new StringBuilder();
+
+			print(list, 0, sb);
+
+			Assert.Equal(sb.ToString(), "");
+		}
+
+		private void print(FieldMappingList list, int depth, StringBuilder sb)
+		{
+			foreach (var f in list)
+			{
+				sb.Append(new string(' ', depth));
+				sb.Append(f.AbsoluteIndex + ": ");
+				sb.Append(f.MemberInfo.Name);
+
+				if (f.IsArray)
+					sb.Append("[" + f.ElementCount + "]");
+
+				sb.AppendLine(" " + f.FieldCount + "x" + f.FieldLength);
+
+				if (f.InnerMappings != null)
+					print(f.InnerMappings, depth + 2, sb);
+			}
 		}
 	}
 }

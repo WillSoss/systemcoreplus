@@ -36,7 +36,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EventArgs.cs" />
-    <Compile Include="IO\Parsing\FieldArrayAttribute.cs" />
     <Compile Include="IO\Parsing\BuiltInFieldParsers.cs" />
     <Compile Include="IO\Parsing\FieldParser.cs" />
     <Compile Include="IO\Parsing\FieldAttribute.cs" />

@@ -10,6 +10,7 @@ namespace System.IO.Parsing
 	{
 		public int Index { get; private set; }
 		public int Length { get; private set; }
+		public int Repeats { get; private set; }
 		public Type ParserType { get; private set; }
 
 		/// <summary>
@@ -17,9 +18,13 @@ namespace System.IO.Parsing
 		/// </summary>
 		/// <param name="index">The zero based position of the field</param>
 		/// <param name="length">The length of the field</param>
-		public FieldAttribute(int index, int length)
+		public FieldAttribute(int index, int length = 0, int repeats = 0)
 			: this(index, length, null)
 		{
+			if (repeats < 2 && repeats != 0)
+				throw new ArgumentOutOfRangeException("Repeats must either be zero or greater than or equal to two");
+
+			this.Repeats = repeats;
 		}
 
 		/// <summary>
