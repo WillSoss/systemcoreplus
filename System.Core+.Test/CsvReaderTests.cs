@@ -14,7 +14,7 @@ namespace System.CorePlus.Test
             {
                 var data = r.Read();
 
-                Assert.Equal(6, data.Length);
+                Assert.Equal(8, data.Length);
                 Assert.Equal("\"", data[0]);
                 Assert.Equal(",", data[1]);
                 Assert.Equal("hello", data[2]);
@@ -22,6 +22,8 @@ namespace System.CorePlus.Test
                 Assert.Equal("hello,world", data[4]);
                 Assert.Equal(@"line
 break", data[5]);
+				Assert.Equal("space in field", data[6]);
+				Assert.Equal("\"space,outside\"", data[7]);
             }
         }
     }

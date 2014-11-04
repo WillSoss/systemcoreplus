@@ -52,6 +52,7 @@ namespace System.IO
 
 			bool qualified = false;
 			bool escapedQualifier = false;
+			bool eatUntilDelimiter = false;
 
 			while (!reader.EndOfStream)
 			{
@@ -60,9 +61,13 @@ namespace System.IO
 				if (!qualified && c == delimiter)
 				{
 					record.Add(field.ToString());
+					eatUntilDelimiter = false;
 					field.Clear();
 					continue;
 				}
+
+				if (eatUntilDelimiter)
+					continue;
 
 				if (c == qualifier)
 				{
@@ -74,11 +79,13 @@ namespace System.IO
 					else if (!qualified)
 					{
 						qualified = true;
+						field.Clear(); // dump anything before qualifier after delimeter
 						continue;
 					}
 					else if (reader.Peek() == -1 || ((char)reader.Peek()) != qualifier)
 					{
 						qualified = false;
+						eatUntilDelimiter = true;
 						continue;
 					}
 					else
@@ -89,9 +96,7 @@ namespace System.IO
 
 				if (!qualified)
 				{
-					if (c == ' ' || c == '\t')
-						continue;
-					else if (c == '\n' || c == '\r')
+					if (c == '\n' || c == '\r')
 					{
 						if (reader.Peek() != -1)
 						{
