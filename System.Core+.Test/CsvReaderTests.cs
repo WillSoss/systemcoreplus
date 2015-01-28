@@ -26,5 +26,19 @@ break", data[5]);
 				Assert.Equal("\"space,outside\"", data[7]);
             }
         }
+
+        [Observation]
+        public void should_read_csv_with_qualified_field_before_line_break()
+        {
+            using (var r = new CsvReader(@"Test Files\Csv2.csv"))
+            {
+                var data = r.Read();
+
+                Assert.Equal(3, data.Length);
+                Assert.Equal("Tax Authority", data[0]);
+                Assert.Equal("Account Number", data[1]);
+                Assert.Equal("Property Details Link", data[2]);
+            }
+        }
     }
 }
