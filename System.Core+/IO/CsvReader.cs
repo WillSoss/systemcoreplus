@@ -66,6 +66,9 @@ namespace System.IO
 					continue;
 				}
 
+				if (!qualified && (c == '\r' || c == '\n'))
+					eatUntilDelimiter = false;
+
 				if (eatUntilDelimiter)
 					continue;
 
