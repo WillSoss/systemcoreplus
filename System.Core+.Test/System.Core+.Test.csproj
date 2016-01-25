@@ -57,6 +57,12 @@
     <Compile Include="FixedWidthReaderTests.cs" />
     <Compile Include="CsvReaderTests.cs" />
     <Compile Include="FixedWidthWriterTests.cs" />
+    <Compile Include="Money\ProRata\negative_remainder_goes_to_multiple.cs" />
+    <Compile Include="Money\ProRata\negative_remainder_goes_to_single.cs" />
+    <Compile Include="Money\ProRata\positive_remainder_goes_to_single.cs" />
+    <Compile Include="Money\ProRata\prorata_distribution_test.cs" />
+    <Compile Include="Money\ProRata\positive_remainder_goes_to_multiple.cs" />
+    <Compile Include="Money\ProRata\remainder_not_distributed.cs" />
     <Compile Include="ParsingTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StringTests.cs" />
@@ -87,6 +93,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup />
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>
