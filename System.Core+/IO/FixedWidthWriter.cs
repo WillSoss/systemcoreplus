@@ -18,36 +18,93 @@ namespace System.IO
 		private StreamWriter writer;
 		private volatile bool disposed = false;
 
-		private int[] columnWidths;
+		private readonly int[] columnWidths;
+		private readonly Dictionary<string, int[]> multiRecordColumnWidths;
 		private char padchar;
 		private string newLine;
 		private bool truncate;
 		private ValueAlignment alignment;
 
+		/// <summary>
+		/// Initializes a new FixedWidthWriter with a single set of column widths for all records in the file.
+		/// </summary>
 		public FixedWidthWriter(string filePath, params int[] columnWidths)
 			: this(filePath, FileMode.CreateNew, columnWidths) { }
 
+		/// <summary>
+		/// Initializes a new FixedWidthWriter with a single set of column widths for all records in the file.
+		/// </summary>
 		public FixedWidthWriter(string filePath, FileMode mode, params int[] columnWidths)
 			: this(File.Open(filePath, mode), columnWidths) { }
 
+		/// <summary>
+		/// Initializes a new FixedWidthWriter with a single set of column widths for all records in the file.
+		/// </summary>
 		public FixedWidthWriter(Stream s, params int[] columnWidths)
 			: this(s, new FixedWidthWriterOptions(), columnWidths) { }
 
+		/// <summary>
+		/// Initializes a new FixedWidthWriter with a single set of column widths for all records in the file.
+		/// </summary>
 		public FixedWidthWriter(Stream s, FixedWidthWriterOptions options, params int[] columnWidths)
+			: this(s, options)
 		{
 			if (columnWidths == null || columnWidths.Length == 0)
 				throw new ArgumentNullException("columnWidths");
 
 			if (columnWidths.Any(i => i < 1))
 				throw new ArgumentOutOfRangeException("columnWidths", "Column widths must be greater than zero");
-
-            this.writer = new StreamWriter(s, options.Encoding);
+			
 			this.columnWidths = columnWidths;
+        }
+
+		/// <summary>
+		/// Initializes a new FixedWidthWriter with multiple types of records, each defining their own column widths. The key in the dictionary must correspond to the value of the first column of the record.
+		/// </summary>
+		public FixedWidthWriter(string filePath, Dictionary<string, int[]> multiRecordColumnWidths)
+			: this(filePath, FileMode.CreateNew, multiRecordColumnWidths) { }
+
+		/// <summary>
+		/// Initializes a new FixedWidthWriter with multiple types of records, each defining their own column widths. The key in the dictionary must correspond to the value of the first column of the record.
+		/// </summary>
+		public FixedWidthWriter(string filePath, FileMode mode, Dictionary<string, int[]> multiRecordColumnWidths)
+			: this(File.Open(filePath, mode), multiRecordColumnWidths) { }
+
+		/// <summary>
+		/// Initializes a new FixedWidthWriter with multiple types of records, each defining their own column widths. The key in the dictionary must correspond to the value of the first column of the record.
+		/// </summary>
+		public FixedWidthWriter(Stream s, Dictionary<string, int[]> multiRecordColumnWidths)
+			: this(s, new FixedWidthWriterOptions(), multiRecordColumnWidths) { }
+
+		/// <summary>
+		/// Initializes a new FixedWidthWriter with multiple types of records, each defining their own column widths. The key in the dictionary must correspond to the value of the first column of the record.
+		/// </summary>
+		public FixedWidthWriter(Stream s, FixedWidthWriterOptions options, Dictionary<string, int[]> multiRecordColumnWidths)
+			: this(s, options)
+		{
+			if (multiRecordColumnWidths == null || multiRecordColumnWidths.Count == 0)
+				throw new ArgumentNullException(nameof(multiRecordColumnWidths));
+
+			if (multiRecordColumnWidths.Select(kv => kv.Value).Any(v => v.Length == 0))
+				throw new ArgumentOutOfRangeException(nameof(multiRecordColumnWidths), "All column width arrays must contain at least one value");
+
+			if (multiRecordColumnWidths.SelectMany(kv => kv.Value).Any(w => w < 1))
+				throw new ArgumentOutOfRangeException(nameof(multiRecordColumnWidths), "Column widths must be greater than zero");
+
+			if (multiRecordColumnWidths.Any(kv => kv.Key.Length > kv.Value[0]))
+				throw new ArgumentOutOfRangeException(nameof(multiRecordColumnWidths), "Record identifiers (keys) cannot be longer than the corresponding first column width");
+			
+			this.multiRecordColumnWidths = multiRecordColumnWidths;
+		}
+
+		private FixedWidthWriter(Stream s, FixedWidthWriterOptions options)
+		{
+			this.writer = new StreamWriter(s, options.Encoding);
 			this.padchar = options.Padding;
-            this.newLine = options.NewLine;
+			this.newLine = options.NewLine;
 			this.truncate = options.TruncateLongValues;
 			this.alignment = options.ValueAlignment;
-        }
+		}
 
 		public Stream BaseStream { get { return writer.BaseStream; } }
 
@@ -80,14 +137,24 @@ namespace System.IO
 		{
 			CheckDisposed();
 
-			string[] values = new string[columnWidths.Length];
+			int[] columnWidths = this.columnWidths;
+			
 			StringBuilder flatrec = new StringBuilder();
 			int i = 0;
 
 			foreach (var obj in record)
 			{
+				// Do initialization here in order to access first item in record
+				if (i == 0 && columnWidths == null)
+				{
+					columnWidths = multiRecordColumnWidths[obj.ToString()];
+
+					if (columnWidths == null)
+						throw new ArgumentException($"Could not find column widths for record type '{obj.ToString()}'", nameof(record));
+				}
+
 				if (i == columnWidths.Length)
-					throw new ArgumentOutOfRangeException("record", "Contains too many fields");
+					throw new ArgumentOutOfRangeException(nameof(record), "Contains too many fields");
 
 				string value = (obj ?? string.Empty).ToString();
 
@@ -96,7 +163,7 @@ namespace System.IO
 					if (truncate)
 						value = value.Truncate(columnWidths[i]);
 					else
-						throw new ArgumentOutOfRangeException("record", "Field at index {0} is too long".FormatString(columnWidths[i]));
+						throw new ArgumentOutOfRangeException(nameof(record), "Field at index {0} is too long".FormatString(columnWidths[i]));
 				}
 				else if (value.Length < columnWidths[i])
 				{
@@ -110,7 +177,7 @@ namespace System.IO
 			}
 
 			if (i != columnWidths.Length)
-				throw new ArgumentOutOfRangeException("record", "Contains too few fields");
+				throw new ArgumentOutOfRangeException(nameof(record), "Contains too few fields");
 			
 			writer.Write(flatrec.ToString());
 			writer.Write(newLine);
