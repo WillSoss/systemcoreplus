@@ -13,8 +13,10 @@ namespace System.IO
 		private volatile bool disposed = false;
 		private IReader reader;
 
-		private int[] columnWidths;
+		private readonly int[] columnWidths;
 		private int recordWidth;
+		private readonly Dictionary<string, int[]> multiRecordColumnWidths;
+		private int firstColWidth;
 		private char[] padding;
 
         public FixedWidthReader(string filePath, params int[] columnWidths)
@@ -24,18 +26,52 @@ namespace System.IO
             : this(s, new FixedWidthReaderOptions(), columnWidths) { }
 
 		public FixedWidthReader(Stream s, FixedWidthReaderOptions options, params int[] columnWidths)
+			: this(s, options)
         {
 			if (columnWidths == null || columnWidths.Length == 0)
 				throw new ArgumentNullException("columnWidths");
 
 			if (columnWidths.Any(i => i < 1))
 				throw new ArgumentOutOfRangeException("columnWidths", "Column widths must be greater than zero");
-
-			this.reader = new StreamReaderAdapter(new StreamReader(s, options.Encoding));
+			
 			this.columnWidths = columnWidths;
 			this.recordWidth = columnWidths.Sum();
-			this.padding = options.Padding;
+			this.firstColWidth = 0;
         }
+
+		public FixedWidthReader(string filePath, Dictionary<string, int[]> multiRecordColumnWidths)
+			: this(File.OpenRead(filePath), multiRecordColumnWidths) { }
+
+		public FixedWidthReader(Stream s, Dictionary<string, int[]> multiRecordColumnWidths)
+			: this(s, new FixedWidthReaderOptions(), multiRecordColumnWidths) { }
+
+		public FixedWidthReader(Stream s, FixedWidthReaderOptions options, Dictionary<string, int[]> multiRecordColumnWidths)
+		{
+			if (multiRecordColumnWidths == null || multiRecordColumnWidths.Count == 0)
+				throw new ArgumentNullException(nameof(multiRecordColumnWidths));
+
+			if (multiRecordColumnWidths.Select(kv => kv.Value).Any(v => v.Length == 0))
+				throw new ArgumentOutOfRangeException(nameof(multiRecordColumnWidths), "All column width arrays must contain at least one value");
+
+			if (multiRecordColumnWidths.SelectMany(kv => kv.Value).Any(w => w < 1))
+				throw new ArgumentOutOfRangeException(nameof(multiRecordColumnWidths), "Column widths must be greater than zero");
+
+			if (multiRecordColumnWidths.Any(kv => kv.Key.Length > kv.Value[0]))
+				throw new ArgumentOutOfRangeException(nameof(multiRecordColumnWidths), "Record identifiers (keys) cannot be longer than the corresponding first column width");
+
+			this.firstColWidth = multiRecordColumnWidths.First().Value[0];
+
+			if (multiRecordColumnWidths.Any(kv => kv.Value[0] != firstColWidth))
+				throw new ArgumentOutOfRangeException(nameof(multiRecordColumnWidths), "The first column (key field) of each record must be the same size");
+
+			this.multiRecordColumnWidths = multiRecordColumnWidths;
+		}
+
+		private FixedWidthReader(Stream s, FixedWidthReaderOptions options)
+		{
+			this.reader = new StreamReaderAdapter(new StreamReader(s, options.Encoding));
+			this.padding = options.Padding;
+		}
 
 		public Stream BaseStream { get { return reader.BaseStream; } }
 
@@ -48,7 +84,22 @@ namespace System.IO
 			if (reader.EndOfStream)
 				return null;
 
-			var rec = reader.Read(recordWidth);
+			int[] columnWidths = this.columnWidths;
+			int recordWidth = this.recordWidth;
+			string rec = string.Empty;
+
+			if (columnWidths == null)
+			{
+				rec = reader.Read(firstColWidth);
+
+				if (!multiRecordColumnWidths.ContainsKey(rec))
+					throw new InvalidFileFormatException($"Unknown record type in file: {rec}");
+
+				columnWidths = multiRecordColumnWidths[rec];
+				recordWidth = columnWidths.Sum();
+			}
+
+			rec += reader.Read(recordWidth - firstColWidth);
 
 			if (rec.Length < recordWidth)
 				throw new InvalidFileFormatException("Unexpected end of record. Expected record length is {0}, record is {1} characters: '{2}'".FormatString(recordWidth, rec.Length, rec));
