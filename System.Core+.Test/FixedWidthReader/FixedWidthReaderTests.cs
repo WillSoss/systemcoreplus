@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Xunit;
 using Xunit.Extensions;
 
@@ -49,6 +51,36 @@ namespace System.CorePlus.Test
 		public void should_throw_invalid_file_format_exception()
 		{
 			Assert.Throws<InvalidFileFormatException>(() => reader.Read());
+		}
+	}
+
+	public class fixed_width_reader_multi_record : Specification
+	{
+		FixedWidthReader r;
+
+		public override void Observe()
+		{
+			r = new FixedWidthReader(@"Test Files\Fw4.txt", new Dictionary<string, int[]> {
+				{"0", new int[] {1, 6} },
+				{"1", new int[] {1, 15} },
+				{"2", new int[] {1, 24, 13 } }
+			});
+		}
+
+		[Observation]
+		public void should_read_fixed_width_file()
+		{
+			var results = r.ReadToEnd().ToArray();
+
+			results[0][0].ShouldEqual("0");
+			results[0][1].ShouldEqual("asdf");
+			results[1][0].ShouldEqual("1");
+			results[1][1].ShouldEqual("thisissometext");
+			results[2][0].ShouldEqual("2");
+			results[2][1].ShouldEqual("thisisanevenlongerrecord");
+			results[2][2].ShouldEqual("withtwofields");
+			results[3][0].ShouldEqual("0");
+			results[3][1].ShouldEqual("1");
 		}
 	}
 }

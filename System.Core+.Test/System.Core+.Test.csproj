@@ -54,9 +54,9 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
-    <Compile Include="FixedWidthReaderTests.cs" />
+    <Compile Include="FixedWidthReader\FixedWidthReaderTests.cs" />
     <Compile Include="CsvReaderTests.cs" />
-    <Compile Include="FixedWidthWriterTests.cs" />
+    <Compile Include="FixedWidthWriter\FixedWidthWriterTests.cs" />
     <Compile Include="Money\ProRata\negative_remainder_goes_to_multiple.cs" />
     <Compile Include="Money\ProRata\negative_remainder_goes_to_single.cs" />
     <Compile Include="Money\ProRata\positive_remainder_goes_to_single.cs" />
@@ -75,6 +75,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Test Files\Csv1.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Test Files\Fw4.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Test Files\Fw3.txt">

@@ -46,6 +46,7 @@ namespace System.IO
 			: this(s, new FixedWidthReaderOptions(), multiRecordColumnWidths) { }
 
 		public FixedWidthReader(Stream s, FixedWidthReaderOptions options, Dictionary<string, int[]> multiRecordColumnWidths)
+			: this(s, options)
 		{
 			if (multiRecordColumnWidths == null || multiRecordColumnWidths.Count == 0)
 				throw new ArgumentNullException(nameof(multiRecordColumnWidths));
@@ -116,6 +117,12 @@ namespace System.IO
 			ConsumeEol(reader);
 
 			return record;
+		}
+
+		public IEnumerable<string[]> ReadToEnd()
+		{
+			while (!EndOfFile)
+				yield return Read();
 		}
 
 		/// <summary>
