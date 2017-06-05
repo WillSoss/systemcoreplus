@@ -18,6 +18,8 @@ namespace System.IO.Parsing
 		public bool IsArray { get; private set; }
 		public bool IsComplexType { get { return InnerMappings != null; } }
 		public int AbsoluteIndex { get; internal set; }
+		public bool IsKeyField { get { return Index == 0; } }
+		public bool CanSetValue { get; private set; }
 		internal FieldMappingList InnerMappings { get; private set; }
 
 		public IFieldParser Parser
@@ -42,13 +44,14 @@ namespace System.IO.Parsing
 		}
 
 		internal FieldMapping(FieldAttribute fieldAttribute, PropertyInfo memberInfo)
-			: this(fieldAttribute, (MemberInfo)memberInfo, memberInfo.PropertyType)
+			: this(fieldAttribute, (MemberInfo)memberInfo, memberInfo.PropertyType, memberInfo.CanWrite)
 		{
-			if (!memberInfo.CanWrite)
+			// If can't write and not key field (value supplied by class for record lookup when reading)
+			if (!memberInfo.CanWrite && fieldAttribute.Index != 0)
 				throw new FileParsingException(string.Format("Can not map property '{0}' because it is read-only", memberInfo.Name));
 		}
 
-		private FieldMapping(FieldAttribute fieldAttribute, MemberInfo memberInfo, Type type)
+		private FieldMapping(FieldAttribute fieldAttribute, MemberInfo memberInfo, Type type, bool canSetValue = true)
 		{
 			var inner = new FieldMappingList(type.IsArray ? type.GetElementType() : type);
 
@@ -60,6 +63,7 @@ namespace System.IO.Parsing
 			InnerMappings = inner.Count > 0 ? inner : null;
 			MemberInfo = memberInfo;
 			MemberType = type.IsArray ? type.GetElementType() : type;
+			CanSetValue = canSetValue;
 
 			if (fieldAttribute.ParserType != null)
 			{

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Parsing;
 using System.Linq;
 using Xunit;
 using Xunit.Extensions;
@@ -81,6 +82,75 @@ namespace System.CorePlus.Test
 			results[2][2].ShouldEqual("withtwofields");
 			results[3][0].ShouldEqual("0");
 			results[3][1].ShouldEqual("1");
+		}
+	}
+
+	public class Rec0
+	{
+		[Field(0, 1)]
+		public int Type { get => 0; }
+
+		[Field(1, 6)]
+		public string Data1 { get; set; }
+	}
+
+	public class Rec1
+	{
+		[Field(0, 1)]
+		public int Type { get => 1; }
+
+		[Field(1, 15)]
+		public string Data1 { get; set; }
+	}
+
+	public class Rec2
+	{
+		[Field(0, 1)]
+		public int Type { get => 2; }
+
+		[Field(1, 24)]
+		public string Data1 { get; set; }
+
+		[Field(2, 13)]
+		public string Data2 { get; set; }
+	}
+
+	public class file_format_reader_tests : Specification
+	{
+		FileFormatReader reader;
+		List<object> records = new List<object>();
+
+		public override void Observe()
+		{
+			reader = new FileFormatReader(@"Test Files\Fw4.txt", FlatFileFormat.FixedWidth, typeof(Rec0), typeof(Rec1), typeof(Rec2));
+
+			while (reader.MoveNext())
+			{
+				records.Add(reader.Current);
+			}
+		}
+
+		[Observation]
+		public void should_read_four_records()
+		{
+			records.Count.ShouldEqual(4);
+		}
+
+		[Observation]
+		public void should_read_file()
+		{
+			records[0].ShouldBeType<Rec0>();
+			((Rec0)records[0]).Data1.ShouldEqual("asdf");
+
+			records[1].ShouldBeType<Rec1>();
+			((Rec1)records[1]).Data1.ShouldEqual("thisissometext");
+
+			records[2].ShouldBeType<Rec2>();
+			((Rec2)records[2]).Data1.ShouldEqual("thisisanevenlongerrecord");
+			((Rec2)records[2]).Data2.ShouldEqual("withtwofields");
+			
+			records[3].ShouldBeType<Rec0>();
+			((Rec0)records[3]).Data1.ShouldEqual("1");
 		}
 	}
 }

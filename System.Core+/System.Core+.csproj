@@ -36,11 +36,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EventArgs.cs" />
+    <Compile Include="IO\FileFormatWriter.cs" />
     <Compile Include="IO\Parsing\BuiltInFieldParsers.cs" />
     <Compile Include="IO\Parsing\FieldParser.cs" />
     <Compile Include="IO\Parsing\FieldAttribute.cs" />
     <Compile Include="IO\Parsing\FieldMapping.cs" />
     <Compile Include="IO\Parsing\FieldMappingList.cs" />
+    <Compile Include="IO\FileFormatReader.cs" />
     <Compile Include="IO\Parsing\FileParser.cs" />
     <Compile Include="IO\Parsing\FileParsingException.cs" />
     <Compile Include="IO\Reader Adapters\BinaryReaderAdapter.cs" />

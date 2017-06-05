@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace System.IO.Parsing
@@ -82,10 +83,18 @@ namespace System.IO.Parsing
 
 		public bool IsReadOnly { get; private set; }
 
+		/// <summary>
+		/// When reading a file format with multiple record types the key value is used to determine the type of record being read.
+		/// </summary>
+		public string Key { get; private set; }
+
+		public Type RecordType { get; private set; }
+
 		public FieldMappingList(Type type)
 		{
 			inner = new List<FieldMapping>();
 			this.IsReadOnly = false;
+			this.RecordType = type;
 
 			// Check fields for attribute
 
@@ -111,11 +120,6 @@ namespace System.IO.Parsing
 					Add(new FieldMapping((FieldAttribute)attrs.First(), prop));
 			}
 
-			Initialized();
-		}
-
-		internal void Initialized()
-		{
 			IsReadOnly = true;
 			inner.Sort();
 
@@ -126,6 +130,27 @@ namespace System.IO.Parsing
 					throw new FileParsingException(string.Format("Field attribute with index {0} not found. Field attributes must be unique and sequential, starting at zero.", i));
 
 				i++;
+			}
+
+			if (inner.Count > 0)
+			{
+				// Get record key value
+				var cons = type.GetConstructor(Type.EmptyTypes);
+
+				if (cons == null)
+					throw new ArgumentException($"The record type {type.FullName} does not have a default constructor");
+
+				var rec = cons.Invoke(new object[0]);
+				var def = inner[0];
+
+				if (def.MemberInfo is PropertyInfo)
+				{
+					Key = ((PropertyInfo)def.MemberInfo).GetValue(rec, null).ToString();
+				}
+				else
+				{
+					Key = ((FieldInfo)def.MemberInfo).GetValue(rec).ToString();
+				}
 			}
 
 			ComputeAbsoluteIndexes(0);
