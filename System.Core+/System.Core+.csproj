@@ -36,6 +36,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EventArgs.cs" />
+    <Compile Include="IO\FieldMappingException.cs" />
     <Compile Include="IO\FileFormatWriter.cs" />
     <Compile Include="IO\Parsing\BuiltInFieldParsers.cs" />
     <Compile Include="IO\Parsing\FieldParser.cs" />

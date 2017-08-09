@@ -18,6 +18,9 @@ namespace System.IO
 		public int RecordCount { get; private set; }
 
 		public FileFormatWriter(string filePath, FlatFileFormat format, params Type[] recordTypes)
+			: this(File.Open(filePath, FileMode.Create), format, recordTypes) { }
+
+		public FileFormatWriter(Stream stream, FlatFileFormat format, params Type[] recordTypes)
 		{
 			IsDisposed = false;
 			recordFieldMappings = new Dictionary<Type, FieldMappingList>();
@@ -28,7 +31,11 @@ namespace System.IO
 			{
 				var mapping = new FieldMappingList(type);
 				recordFieldMappings.Add(mapping.RecordType, mapping);
-				multiRecordColumnWidths.Add(mapping.Key, mapping.FieldLengths.ToArray());
+
+				if (mapping.Key == null && recordTypes.Length > 1)
+					throw new FieldMappingException($"{type.FullName} does not supply a value in field 0 for mapping record types");
+
+				multiRecordColumnWidths.Add(mapping.Key ?? string.Empty, mapping.FieldLengths.ToArray());
 			}
 
 			if (format == FlatFileFormat.Csv)
@@ -39,9 +46,9 @@ namespace System.IO
 			else if (format == FlatFileFormat.FixedWidth)
 			{
 				if (MultipleRecordTypes)
-					writer = new FixedWidthWriter(filePath, multiRecordColumnWidths);
+					writer = new FixedWidthWriter(stream, multiRecordColumnWidths);
 				else
-					writer = new FixedWidthWriter(filePath, multiRecordColumnWidths.First().Value);
+					writer = new FixedWidthWriter(stream, multiRecordColumnWidths.First().Value);
 			}
 			else
 			{
@@ -58,14 +65,47 @@ namespace System.IO
 
 			var mappings = recordFieldMappings[typeof(T)];
 
-			WriteValues(record, mappings);
+			var output = WriteValues(record, mappings);
+
+			writer.Write(output);
 
 			RecordCount++;
 		}
 
-		private void WriteValues(object record, FieldMappingList mappings)
+		private object[] WriteValues(object item, FieldMappingList mappings, object[] output = null, int offset = 0)
 		{
-			throw new NotImplementedException();
+			if (output == null)
+				output = new object[mappings.FieldCount];
+
+			foreach (var field in mappings)
+			{
+				if (field.IsArray)
+				{
+					Array array = field.GetArray(item);
+
+					for (int i = 0; i < field.ElementCount; i++)
+					{
+						if (field.IsComplexType)
+						{
+							WriteValues(array.GetValue(i), field.InnerMappings, output, i * field.FieldCount);
+						}
+						else
+						{
+							output[field.AbsoluteIndex + offset + i] = array.GetValue(i);
+						}
+					}
+				}
+				else if (field.IsComplexType)
+				{
+					WriteValues(field.GetValue(item), field.InnerMappings, output, 0);
+				}
+				else
+				{
+					output[field.AbsoluteIndex + offset] = field.GetValue(item);
+				}
+			}
+
+			return output;
 		}
 
 		public void Flush()

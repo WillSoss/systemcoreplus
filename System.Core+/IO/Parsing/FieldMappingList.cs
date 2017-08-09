@@ -65,6 +65,9 @@ namespace System.IO.Parsing
 			get { return inner.Sum(m => m.FieldLength); }
 		}
 
+		/// <summary>
+		/// The number of characters occupied by this record
+		/// </summary>
 		public int RecordLength
 		{
 			get { return inner.Sum(m => m.FieldLength); }
@@ -145,11 +148,11 @@ namespace System.IO.Parsing
 
 				if (def.MemberInfo is PropertyInfo)
 				{
-					Key = ((PropertyInfo)def.MemberInfo).GetValue(rec, null).ToString();
+					Key = ((PropertyInfo)def.MemberInfo).GetValue(rec, null)?.ToString();
 				}
 				else
 				{
-					Key = ((FieldInfo)def.MemberInfo).GetValue(rec).ToString();
+					Key = ((FieldInfo)def.MemberInfo).GetValue(rec)?.ToString();
 				}
 			}
 

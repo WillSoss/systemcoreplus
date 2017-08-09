@@ -1,49 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
 using System.IO.Parsing;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 using Xunit.Extensions;
 
-namespace System.CorePlus.Test
+namespace System.CorePlus.Test.File_Format
 {
-	public class PropertyModel
-	{
-		[Field(0, 10)]
-		public string AccountNumber { get; set; }
-		[Field(1, 5)]
-		public bool IsAdjudicated { get; set; }
-		[Field(2, 10)]
-		public decimal AmountDue { get; set; }
-		[Field(3, repeats: 2)]
-		public OwnerModel[] Owners { get; set; }
-		[Field(4)]
-		public AddressModel Address { get;set;}
-	}
-
-	public class AddressModel
-	{
-		[Field(0, 12)]
-		public string Street { get; set; }
-		[Field(1, 2)]
-		public string State { get; set; }
-	}
-
-	public class OwnerModel
-	{
-		[Field(0, 2)]
-		public int Number { get; set; }
-		[Field(1, 10)]
-		public string Name { get; set; }
-		[Field(2, 12)]
-		public string Address { get; set; }
-		[Field(3, length: 10, repeats: 2)]
-		public string[] PhoneNumbers { get; set; }
-	}
-
 	public class parsing_fixed_width_file : Specification
 	{
 		List<PropertyModel> properties;
@@ -52,7 +14,7 @@ namespace System.CorePlus.Test
 		{
 			properties = new List<PropertyModel>();
 
-			using (var parser = new FileParser<PropertyModel>(@"Test Files\Fw3.txt", FlatFileFormat.FixedWidth))
+			using (var parser = new FileParser<PropertyModel>(@"..\..\Test Files\Fw3.txt", FlatFileFormat.FixedWidth))
 			{
 				while (parser.MoveNext())
 					properties.Add(parser.Current);

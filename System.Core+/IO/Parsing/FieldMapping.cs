@@ -14,6 +14,9 @@ namespace System.IO.Parsing
 		public int Index { get; private set; }
 		public int ElementCount { get; private set; }
 		public int FieldCount { get; private set; }
+		/// <summary>
+		/// The number of characters occupied by this field
+		/// </summary>
 		public int FieldLength { get; private set; }
 		public bool IsArray { get; private set; }
 		public bool IsComplexType { get { return InnerMappings != null; } }
@@ -144,6 +147,18 @@ namespace System.IO.Parsing
 			}
 		}
 
+		internal object GetValue(object item)
+		{
+			if (MemberInfo is PropertyInfo)
+			{
+				return ((PropertyInfo)MemberInfo).GetValue(item, null);
+			}
+			else
+			{
+				return ((FieldInfo)MemberInfo).GetValue(item);
+			}
+		}
+
 		internal object SetComplexType(object item)
 		{
 			var ct = MemberType.GetConstructor(Type.EmptyTypes).Invoke(new object[0]);
@@ -174,6 +189,25 @@ namespace System.IO.Parsing
 			else
 			{
 				((FieldInfo)MemberInfo).SetValue(item, array);
+			}
+
+			return array;
+		}
+
+		internal Array GetArray(object item)
+		{
+			if (!IsArray)
+				throw new InvalidOperationException();
+
+			Array array = null;
+
+			if (MemberInfo is PropertyInfo)
+			{
+				array = (Array)((PropertyInfo)MemberInfo).GetValue(item, null);
+			}
+			else
+			{
+				array = (Array)((FieldInfo)MemberInfo).GetValue(item);
 			}
 
 			return array;

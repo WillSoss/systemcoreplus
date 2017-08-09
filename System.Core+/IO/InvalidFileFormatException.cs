@@ -1,5 +1,4 @@
-﻿
-namespace System.IO
+﻿namespace System.IO
 {
 	public class InvalidFileFormatException : IOException
 	{
