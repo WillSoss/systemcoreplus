@@ -8,22 +8,22 @@ using Xunit.Extensions;
 
 namespace System.CorePlus.Test.File_Format
 {
-	public abstract class FileFormatWriterTest : Specification
+	public abstract class MappingTest : Specification
 	{
 		string accountNumber = "1234567890";
 		decimal amountDue = 12345.67M;
 		bool isAdjudicated = true;
 		string state = "LA";
-		string street = "935 Gravier St";
+		string street = "935 Gravier";
 
-		int owner1Number = 342;
-		string owner1Address = "837 Gravier St";
+		int owner1Number = 34;
+		string owner1Address = "837 Gravier";
 		string owner1Name = "John Smith";
 		string owner1Phone1 = "5041234567";
 		string owner1Phone2 = "5049876543";
 
-		int owner2Number = 7800;
-		string owner2Address = "1300 Perdido St";
+		int owner2Number = 78;
+		string owner2Address = "1300 Perdido";
 		string owner2Name = "Jane Smith";
 		string owner2Phone1 = "9849485730";
 		string owner2Phone2 = "4561237890";
@@ -31,7 +31,7 @@ namespace System.CorePlus.Test.File_Format
 		protected MemoryStream stream;
 		protected FileFormatWriter writer;
 
-		public FileFormatWriterTest()
+		public MappingTest()
 		{
 			stream = new MemoryStream();
 
@@ -79,21 +79,29 @@ namespace System.CorePlus.Test.File_Format
 		}
 	}
 
-	public class file_format_writer_writes_model_to_file : FileFormatWriterTest
+	public class file_format_writer_writes_model_to_file : MappingTest
 	{
-		private string file;
+		private string actualFile;
+		private string expectedFile = "1234567890True 12345.67  34John Smith837 Gravier 5041234567504987654378Jane Smith1300 Perdido98494857304561237890935 Gravier LA";
 
 		public override void Observe()
 		{
 			writer.Write(GetModel());
+			writer.Flush();
 
-			file = Encoding.UTF8.GetString(stream.ToArray());
+			actualFile = Encoding.UTF8.GetString(stream.ToArray());
+
+			// Remove byte order mark for test comparison
+			// https://en.wikipedia.org/wiki/Byte_order_mark
+			if (actualFile[0] == 0xFEFF)
+				actualFile = actualFile.Substring(1, actualFile.Length - 1);
 		}
 
 		[Observation]
 		public void file_should_be_created()
 		{
-			file.ShouldEqual("");
+			actualFile.Length.ShouldEqual(expectedFile.Length);
+			actualFile.ShouldEqual(expectedFile);
 		}
 	}
 }

@@ -17,7 +17,7 @@ namespace System.IO.Parsing
 
 		public int FieldCount
 		{
-			get { return inner.Sum(m => m.FieldCount); }
+			get { return FieldLengths.Count(); }
 		}
 
 		public IEnumerable<int> FieldLengths

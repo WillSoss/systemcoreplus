@@ -16,6 +16,7 @@ namespace System.IO
 		public static readonly Encoding DefaultEncoding = Encoding.UTF8;
 
 		private StreamWriter writer;
+		private bool firstRecord = true;
 		private volatile bool disposed = false;
 
 		private readonly int[] columnWidths;
@@ -163,7 +164,7 @@ namespace System.IO
 					if (truncate)
 						value = value.Truncate(columnWidths[i]);
 					else
-						throw new ArgumentOutOfRangeException(nameof(record), "Field at index {0} is too long".FormatString(columnWidths[i]));
+						throw new ArgumentOutOfRangeException(nameof(record), $"Value in field at index {i} is too long. Field length is {columnWidths[i]}, value length is {value.Length}, value is '{value}'.");
 				}
 				else if (value.Length < columnWidths[i])
 				{
@@ -178,9 +179,14 @@ namespace System.IO
 
 			if (i != columnWidths.Length)
 				throw new ArgumentOutOfRangeException(nameof(record), "Contains too few fields");
-			
+
+			// Put a newline between records, but not before or after a record in a file with one record
+			if (firstRecord)
+				firstRecord = false;
+			else
+				writer.WriteLine(newLine);
+
 			writer.Write(flatrec.ToString());
-			writer.Write(newLine);
 		}
 
 		/// <summary>
