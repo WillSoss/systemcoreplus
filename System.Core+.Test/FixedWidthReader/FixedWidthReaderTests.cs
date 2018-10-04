@@ -12,7 +12,7 @@ namespace System.CorePlus.Test
     {
 		FixedWidthReader r;
 
-		public override void Observe()
+		protected override void Observe()
 		{
 			r = new FixedWidthReader(@"Test Files\Fw1.txt", 15, 15, 4, 5, 10);
 		}
@@ -43,7 +43,7 @@ namespace System.CorePlus.Test
 	{
 		FixedWidthReader reader;
 
-		public override void Observe()
+		protected override void Observe()
 		{
 			reader = new FixedWidthReader(@"Test Files\Fw2 - Short Record.txt", 15, 15, 4, 5, 10);
 		}
@@ -59,7 +59,7 @@ namespace System.CorePlus.Test
 	{
 		FixedWidthReader r;
 
-		public override void Observe()
+		protected override void Observe()
 		{
 			r = new FixedWidthReader(@"Test Files\Fw4.txt", new Dictionary<string, int[]> {
 				{"0", new int[] {1, 6} },
@@ -120,7 +120,7 @@ namespace System.CorePlus.Test
 		FileFormatReader reader;
 		List<object> records = new List<object>();
 
-		public override void Observe()
+		protected override void Observe()
 		{
 			reader = new FileFormatReader(@"Test Files\Fw4.txt", FlatFileFormat.FixedWidth, typeof(Rec0), typeof(Rec1), typeof(Rec2));
 

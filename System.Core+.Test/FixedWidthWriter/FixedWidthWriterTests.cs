@@ -31,7 +31,7 @@ namespace System.CorePlus.Test
 
 	public class fixed_width_writer : fixed_width_writer_test
 	{
-		public override void Observe()
+		protected override void Observe()
 		{
 			writer.Write("asdf");
 		}
