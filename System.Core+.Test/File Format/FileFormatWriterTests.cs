@@ -84,7 +84,7 @@ namespace System.CorePlus.Test.File_Format
 		private string actualFile;
 		private string expectedFile = "1234567890True 12345.67  34John Smith837 Gravier 5041234567504987654378Jane Smith1300 Perdido98494857304561237890935 Gravier LA";
 
-		public override void Observe()
+		protected override void Observe()
 		{
 			writer.Write(GetModel());
 			writer.Flush();

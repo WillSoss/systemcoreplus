@@ -47,7 +47,7 @@ namespace System.CorePlus.Test.Money.ProRata
             this.expectedRemainder = remainder;
         }
 
-        public override void Observe()
+        protected override void Observe()
         {
             dist = System.Money.DistributeProRata(whole, weights, remainderGoesTo: remainderGoesTo, takeNegativeRemainderFromSame: takeNegativeRemainderFromSame);
         }

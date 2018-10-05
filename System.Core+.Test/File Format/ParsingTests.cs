@@ -10,11 +10,11 @@ namespace System.CorePlus.Test.File_Format
 	{
 		List<PropertyModel> properties;
 
-		public override void Observe()
+		protected override void Observe()
 		{
 			properties = new List<PropertyModel>();
 
-			using (var parser = new FileParser<PropertyModel>(@"..\..\Test Files\Fw3.txt", FlatFileFormat.FixedWidth))
+			using (var parser = new FileParser<PropertyModel>(@"Test Files\Fw3.txt", FlatFileFormat.FixedWidth))
 			{
 				while (parser.MoveNext())
 					properties.Add(parser.Current);
@@ -55,7 +55,7 @@ namespace System.CorePlus.Test.File_Format
 
 			print(list, 0, sb);
 
-			Assert.Equal(sb.ToString(), "");
+			Assert.Equal("", sb.ToString());
 		}
 
 		private void print(FieldMappingList list, int depth, StringBuilder sb)
